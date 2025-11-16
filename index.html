@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>LIC Policy XIRR Calculator (Public Domain)</title>
+<meta charset="UTF-8" />
+<style>
+    body { font-family: Arial; margin: 40px; background: #f6f6f6; }
+    h2 { color: #333; }
+    .box { background:#fff; padding:20px; border-radius:10px; width:600px; }
+    input, button { padding:8px; margin:5px 0; width:100%; font-size:15px; }
+    table { width:100%; margin-top:20px; border-collapse: collapse; }
+    td, th { border:1px solid #ccc; padding:8px; text-align:left; }
+</style>
+</head>
+
+<body>
+<h2>LIC Policy XIRR Calculator</h2>
+<div class="box">
+    <label>Policy Name / Type</label>
+    <input id="pname" placeholder="e.g., Jeevan Anand" />
+
+    <label>Commencement Date</label>
+    <input id="cdate" type="date"/>
+
+    <label>Premium Amount</label>
+    <input id="premium" type="number" />
+
+    <label>Total Premiums Paid Till Date</label>
+    <input id="count" type="number" />
+
+    <label>Premium Payment Term (Years)</label>
+    <input id="ppt" type="number" />
+
+    <label>Policy Cover Term (Years)</label>
+    <input id="term" type="number" />
+
+    <label>Policy Maturity Date</label>
+    <input id="mdate" type="date"/>
+
+    <label>Total Claim Payout Till Date (if any)</label>
+    <input id="claim" type="number" value="0"/>
+
+    <button onclick="calculateXIRR()">Calculate XIRR</button>
+
+    <h3 id="result"></h3>
+</div>
+
+<script>
+// ---------------------
+//    XIRR FUNCTION
+// ---------------------
+function xnpv(rate, values, dates) {
+    let t0 = dates[0];
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+        let diff = (dates[i] - t0) / (1000 * 3600 * 24);
+        sum += values[i] / Math.pow(1 + rate, diff / 365);
+    }
+    return sum;
+}
+
+function xirr(values, dates) {
+    let rate = 0.1;
+    for (let i = 0; i < 200; i++) {
+        let f = xnpv(rate, values, dates);
+        let f1 = (xnpv(rate + 0.0001, values, dates) - f) / 0.0001;
+        let newRate = rate - f / f1;
+        if (Math.abs(newRate - rate) < 1e-10) return rate;
+        rate = newRate;
+    }
+    return rate;
+}
+
+// ---------------------
+//   MAIN CALCULATOR
+// ---------------------
+function calculateXIRR() {
+    let pname = document.getElementById('pname').value;
+    let cdate = new Date(document.getElementById('cdate').value);
+    let premium = parseFloat(document.getElementById('premium').value);
+    let paidCount = parseFloat(document.getElementById('count').value);
+    let mdate = new Date(document.getElementById('mdate').value);
+    let claim = parseFloat(document.getElementById('claim').value);
+
+    let values = [];
+    let dates = [];
+
+    for (let i = 0; i < paidCount; i++) {
+        let payDate = new Date(cdate);
+        payDate.setMonth(payDate.getMonth() + i * 12);
+        values.push(-premium);
+        dates.push(payDate);
+    }
+
+    values.push(claim);
+    dates.push(mdate);
+
+    let rate = xirr(values, dates) * 100;
+
+    document.getElementById("result").innerHTML =
+        pname + " → XIRR: <b>" + rate.toFixed(2) + "%</b>";
+}
+</script>
+
+</body>
+</html>
