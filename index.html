@@ -1,106 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>LIC Policy XIRR Calculator (Public Domain)</title>
 <meta charset="UTF-8" />
-<style>
-    body { font-family: Arial; margin: 40px; background: #f6f6f6; }
-    h2 { color: #333; }
-    .box { background:#fff; padding:20px; border-radius:10px; width:600px; }
-    input, button { padding:8px; margin:5px 0; width:100%; font-size:15px; }
-    table { width:100%; margin-top:20px; border-collapse: collapse; }
-    td, th { border:1px solid #ccc; padding:8px; text-align:left; }
-</style>
+<title>LIC XIRR Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-<h2>LIC Policy XIRR Calculator</h2>
-<div class="box">
-    <label>Policy Name / Type</label>
-    <input id="pname" placeholder="e.g., Jeevan Anand" />
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
 
-    <label>Commencement Date</label>
-    <input id="cdate" type="date"/>
+<div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 animate-fadeIn">
 
-    <label>Premium Amount</label>
-    <input id="premium" type="number" />
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">
+        LIC Policy XIRR Calculator
+    </h1>
 
-    <label>Total Premiums Paid Till Date</label>
-    <input id="count" type="number" />
+    <!-- FORM GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <label>Premium Payment Term (Years)</label>
-    <input id="ppt" type="number" />
+        <div>
+            <label class="font-semibold">Policy Name</label>
+            <input id="pname" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300" placeholder="e.g., Jeevan Anand">
+        </div>
 
-    <label>Policy Cover Term (Years)</label>
-    <input id="term" type="number" />
+        <div>
+            <label class="font-semibold">Commencement Date</label>
+            <input id="cdate" type="date" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
+        </div>
 
-    <label>Policy Maturity Date</label>
-    <input id="mdate" type="date"/>
+        <div>
+            <label class="font-semibold">Premium Amount</label>
+            <input id="premium" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
+        </div>
 
-    <label>Total Claim Payout Till Date (if any)</label>
-    <input id="claim" type="number" value="0"/>
+        <div>
+            <label class="font-semibold">Premiums Paid</label>
+            <input id="count" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
+        </div>
 
-    <button onclick="calculateXIRR()">Calculate XIRR</button>
+        <div>
+            <label class="font-semibold">Policy Maturity Date</label>
+            <input id="mdate" type="date" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
+        </div>
 
-    <h3 id="result"></h3>
-</div>
+        <div>
+            <label class="font-semibold">Total Payout / Claim</label>
+            <input id="claim" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300" value="0">
+        </div>
+    </div>
 
-<script>
-// ---------------------
-//    XIRR FUNCTION
-// ---------------------
-function xnpv(rate, values, dates) {
-    let t0 = dates[0];
-    let sum = 0;
-    for (let i = 0; i < values.length; i++) {
-        let diff = (dates[i] - t0) / (1000 * 3600 * 24);
-        sum += values[i] / Math.pow(1 + rate, diff / 365);
-    }
-    return sum;
-}
-
-function xirr(values, dates) {
-    let rate = 0.1;
-    for (let i = 0; i < 200; i++) {
-        let f = xnpv(rate, values, dates);
-        let f1 = (xnpv(rate + 0.0001, values, dates) - f) / 0.0001;
-        let newRate = rate - f / f1;
-        if (Math.abs(newRate - rate) < 1e-10) return rate;
-        rate = newRate;
-    }
-    return rate;
-}
-
-// ---------------------
-//   MAIN CALCULATOR
-// ---------------------
-function calculateXIRR() {
-    let pname = document.getElementById('pname').value;
-    let cdate = new Date(document.getElementById('cdate').value);
-    let premium = parseFloat(document.getElementById('premium').value);
-    let paidCount = parseFloat(document.getElementById('count').value);
-    let mdate = new Date(document.getElementById('mdate').value);
-    let claim = parseFloat(document.getElementById('claim').value);
-
-    let values = [];
-    let dates = [];
-
-    for (let i = 0; i < paidCount; i++) {
-        let payDate = new Date(cdate);
-        payDate.setMonth(payDate.getMonth() + i * 12);
-        values.push(-premium);
-        dates.push(payDate);
-    }
-
-    values.push(claim);
-    dates.push(mdate);
-
-    let rate = xirr(values, dates) * 100;
-
-    document.getElementById("result").innerHTML =
-        pname + " → XIRR: <b>" + rate.toFixed(2) + "%</b>";
-}
-</script>
-
-</body>
-</html>
+    <!-- Calculate Button -->
+    <button onclick="calculateXIRR()"
+        class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl
