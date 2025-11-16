@@ -1,103 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>LIC XIRR Calculator</title>
-<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Materialize CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<style>
+body {
+    background: #f1f3f4;
+}
+.card {
+    border-radius: 16px;
+}
+.result-card {
+    display: none;
+}
+.fade-in {
+    animation: fadein 0.6s ease-out;
+}
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+<body>
 
-<div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 animate-fadeIn">
+<div class="container" style="margin-top: 40px;">
 
-    <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">
-        LIC Policy XIRR Calculator
-    </h1>
+    <div class="card z-depth-3">
+        <div class="card-content">
+            <span class="card-title center-align blue-text text-darken-3">
+                <i class="material-icons">calculate</i> LIC XIRR Calculator
+            </span>
 
-    <!-- FORM GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- FORM -->
+            <div class="row">
+                <div class="input-field col s12 m6">
+                    <input id="pname" type="text">
+                    <label for="pname">Policy Name</label>
+                </div>
 
-        <div>
-            <label class="font-semibold">Policy Name</label>
-            <input id="pname" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300" placeholder="e.g., Jeevan Anand">
-        </div>
+                <div class="input-field col s12 m6">
+                    <input id="cdate" type="date" class="datepicker">
+                    <label for="cdate">Commencement Date</label>
+                </div>
 
-        <div>
-            <label class="font-semibold">Commencement Date</label>
-            <input id="cdate" type="date" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
-        </div>
+                <div class="input-field col s12 m6">
+                    <input id="premium" type="number">
+                    <label for="premium">Premium Amount</label>
+                </div>
 
-        <div>
-            <label class="font-semibold">Premium Amount</label>
-            <input id="premium" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
-        </div>
+                <div class="input-field col s12 m6">
+                    <input id="count" type="number">
+                    <label for="count">Number of Premiums Paid</label>
+                </div>
 
-        <div>
-            <label class="font-semibold">Premiums Paid</label>
-            <input id="count" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
-        </div>
+                <div class="input-field col s12 m6">
+                    <input id="mdate" type="date" class="datepicker">
+                    <label for="mdate">Maturity Date</label>
+                </div>
 
-        <div>
-            <label class="font-semibold">Policy Maturity Date</label>
-            <input id="mdate" type="date" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300">
-        </div>
+                <div class="input-field col s12 m6">
+                    <input id="claim" type="number" value="0">
+                    <label for="claim">Total Maturity / Payout</label>
+                </div>
+            </div>
 
-        <div>
-            <label class="font-semibold">Total Payout / Claim</label>
-            <input id="claim" type="number" class="w-full p-3 rounded-lg border mt-1 focus:ring focus:ring-blue-300" value="0">
+            <div class="center-align">
+                <button class="btn-large waves-effect waves-light blue" onclick="calculateXIRR()">
+                    <i class="material-icons left">insights</i> Calculate XIRR
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Calculate Button -->
-    <button onclick="calculateXIRR()"
-        class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl text-lg shadow-lg transition-all active:scale-95">
-        Calculate XIRR
-    </button>
-
-    <!-- Result Box -->
-    <div id="resultBox" class="hidden mt-8 p-6 rounded-xl shadow-inner bg-green-50 border border-green-300">
-        <h3 class="text-xl font-bold text-green-700" id="resultTitle"></h3>
-        <p class="text-green-600 font-semibold mt-2 text-lg" id="resultValue"></p>
+    <!-- RESULT CARD -->
+    <div id="resultCard" class="card result-card green lighten-5 z-depth-2 fade-in">
+        <div class="card-content">
+            <span class="card-title green-text text-darken-2">
+                <i class="material-icons">trending_up</i> Result
+            </span>
+            <h5 id="resultText" class="black-text" style="margin-top: 10px;"></h5>
+        </div>
     </div>
+
 </div>
 
-<!-- Smooth animation -->
-<style>
-@keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-.animate-fadeIn { animation: fadeIn 0.8s ease-in-out; }
-</style>
+<!-- Materialize JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
 <script>
-// SAFER XNPV
+// ----------- XNPV ----------
 function xnpv(rate, values, dates) {
     let t0 = dates[0];
-    return values.reduce((sum, value, i) => {
+    return values.reduce((acc, val, i) => {
         let diff = (dates[i] - t0) / (1000 * 3600 * 24);
-        return sum + value / Math.pow(1 + rate, diff / 365);
+        return acc + val / Math.pow(1 + rate, diff / 365);
     }, 0);
 }
 
-// ROBUST XIRR FUNCTION (NO Infinity, NO NaN)
+// ----------- ROBUST XIRR ----------
 function xirr(values, dates) {
     let guess = 0.1;
-    let eps = 1e-8; 
-    let maxIter = 100;
+    let eps = 1e-8;
 
-    for (let i = 0; i < maxIter; i++) {
+    for (let i = 0; i < 100; i++) {
         let f = xnpv(guess, values, dates);
         let f1 = (xnpv(guess + eps, values, dates) - f) / eps;
 
-        // Prevent divide-by-zero → Infinity
         if (Math.abs(f1) < 1e-12) return null;
 
         let newGuess = guess - f / f1;
-
         if (Math.abs(newGuess - guess) < eps) return newGuess;
-
         guess = newGuess;
     }
+    return null;
+}
 
-    return null;  // XIRR didn't converge
+// ----------- MAIN CALCULATOR ----------
+function calculateXIRR() {
+    let pname = document.getElementById("pname").value || "LIC Policy";
+    let cdate = new Date(document.getElementById("cdate").value);
+    let premium = Number(document.getElementById("premium").value);
+    let count = Number(document.getElementById("count").value);
+    let mdate = new Date(document.getElementById("mdate").value);
+    let claim = Number(document.getElementById("claim").value);
+
+    if (claim <= 0 || !premium || !count || isNaN(cdate.getTime()) || isNaN(mdate.getTime())) {
+        M.toast({html: "Please fill all fields properly!", classes: "red"});
+        return;
+    }
+
+    let values = [], dates = [];
+
+    for (let i = 0; i < count; i++) {
+        let d = new Date(cdate);
+        d.setFullYear(cdate.getFullYear() + i);
+        values.push(-premium);
+        dates.push(d);
+    }
+
+    values.push(claim);
+    dates.push(mdate);
+
+    let rate = xirr(values, dates);
+
+    const resultCard = document.getElementById("resultCard");
+    const resultText = document.getElementById("resultText");
+
+    if (!rate || !isFinite(rate)) {
+        resultText.innerHTML = `<b>${pname}</b><br>Unable to compute XIRR. Check the cashflows.`;
+    } else {
+        resultText.innerHTML = `<b>${pname}</b><br>XIRR: <strong>${(rate * 100).toFixed(2)}%</strong>`;
+    }
+
+    resultCard.style.display = "block";
 }
 </script>
 
